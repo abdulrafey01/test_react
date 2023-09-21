@@ -20,126 +20,77 @@ export default function App() {
 
   const [data, setdata] = useState({
     total: 10,
-    contacts_ids: [745450, 502931, 745452, 502933, 11, 20],
+    contacts_ids: [20],
     contacts: {
-      745450: {
-        id: 745450,
-        first_name: "Jason1",
-        last_name: "Alexis1",
-        email: null,
-        phone_number: "9404480524",
-        country_id: 226,
-        us: true,
-      },
-      502931: {
-        id: 502931,
-        first_name: "jason",
-        last_name: "Alexis",
-        email: "",
-        phone_number: "0",
-        country_id: 226,
-        us: false,
-      },
-      745452: {
-        id: 745450,
-        first_name: "Jason1",
-        last_name: "Alexis1",
-        email: null,
-        phone_number: "9404480524",
-        country_id: 226,
-        us: true,
-      },
-      502933: {
-        id: 502931,
-        first_name: "jason",
-        last_name: "Alexis",
-        email: "",
-        phone_number: "0",
-        country_id: 226,
-        us: false,
-      },
-      11: {
-        id: 11,
-        first_name: "Ali",
-        last_name: "Afzal",
-        email: null,
-        phone_number: "9404480524",
-        country_id: 226,
-        us: true,
-      },
       20: {
         id: 20,
-        first_name: "Ahmed",
-        last_name: "Javed",
+        first_name: "",
+        last_name: "",
         email: "",
-        phone_number: "0",
+        phone_number: "",
         country_id: 226,
         us: false,
       },
     },
   });
 
-  // const fetchData = () => {
-  //   const token =
-  //     "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjU2MCwiZXhwIjoxNzI2NTY3MTc5LCJ0eXBlIjoiYWNjZXNzIiwidGltZXN0YW1wIjoxNjk1MDMxMTc5fQ.0y7NtuVDCvcPvmWbliMs1q02sov2oFC6u2Hi6H4A2W4";
-  //   const params = {
-  //     companyId: 171,
-  //     page: 1,
-  //     countryId: 226,
-  //   };
-  //   axios({
-  //     method: "GET",
-  //     url: "https://api.dev.pastorsline.com/api/contacts.json",
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //     params: params,
-  //   }).then((res) => {
-  //       console.log(res.data);
-  //       setdata(res.data);
-  //       setcontacts(res.data.contacts);
-  //     })
-  //     .catch((e) => {
-  //       console.log(e.message);
-  //     });
-  // };
+  const fetchData = () => {
+    const token =
+      "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjU2MCwiZXhwIjoxNzI2NTY3MTc5LCJ0eXBlIjoiYWNjZXNzIiwidGltZXN0YW1wIjoxNjk1MDMxMTc5fQ.0y7NtuVDCvcPvmWbliMs1q02sov2oFC6u2Hi6H4A2W4";
+    const params = {
+      companyId: 560,
+      page: 1,
+      countryId: 226,
+      noGroupDuplicates :1
+
+    };
+    axios({
+      method: "GET",
+      url: "https://api.dev.pastorsline.com/api/contacts.json",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: params,
+    }).then((res) => {
+        console.log(res.data);
+        setdata(res.data);
+        // setcontacts(res.data.contacts);
+      })
+      .catch((e) => {
+        console.log(e.message);
+      });
+  };
   useEffect(() => {
     const filtered = data.contacts_ids.filter((id) => {
       const contact = data.contacts[id];
       if (!contact) return false; // Handle missing contacts
   
+      // Tokenize the search query by spaces
+      const searchTokens = searchQuery.toLowerCase().split(' ');
+  
+      // Tokenize the contact names by spaces
+      const contactNameTokens = `${contact.first_name} ${contact.last_name}`.toLowerCase().split(' ');
+  
+      // Check if any search tokens are found in the contact names
+      const nameMatches = searchTokens.every((token) =>
+        contactNameTokens.some((nameToken) => nameToken.includes(token))
+      );
+  
+      // Apply filters based on showUSContacts and onlyEven
       if (showUSContacts && onlyEven) {
-        // Filter by US, even IDs, and search query
-        return (
-          contact.us &&
-          id % 2 === 0 &&
-          (contact.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            contact.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
+        return contact.us && id % 2 === 0 && nameMatches;
       } else if (showUSContacts) {
-        // Filter by US and search query
-        return (
-          contact.us &&
-          (contact.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            contact.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
+        return contact.us && nameMatches;
       } else if (onlyEven) {
-        // Filter by even IDs and search query (both US and non-US)
-        return (
-          id % 2 === 0 &&
-          (contact.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            contact.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
+        return id % 2 === 0 && nameMatches;
       } else {
-        // Filter by search query only (both US and non-US)
-        return (
-          contact.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          contact.last_name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        return nameMatches;
       }
     });
   
     setFilteredContacts(filtered);
+
+    // Further processing with filtered data
   }, [data.contacts_ids, data.contacts, searchQuery, showUSContacts, onlyEven]);
   
 
@@ -160,9 +111,9 @@ export default function App() {
     <div className="flex justify-center items-center h-screen">
       <div className="flex flex-row gap-4">
         <button
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg"
+          className="bg-customPurple  text-white px-4 py-2 rounded-lg"
           onClick={() => {
-            // fetchData()
+            fetchData()
             // console.log(data);
             setshow(!show);
             setShowUSContacts(false);
@@ -172,7 +123,7 @@ export default function App() {
           Button A
         </button>
         <button
-          className="bg-orange-500 text-white px-4 py-2 rounded-lg"
+          className="bg-customOrange text-white px-4 py-2 rounded-lg"
           onClick={() => {
             setshow(!show);
             setShowUSContacts(true);
@@ -190,8 +141,8 @@ export default function App() {
           onCloseUrlChange("cl");
         }}
       >
-        <div>
-          <div className="flex flex-col justify-center align-middle">
+        <div className="h-[500px]">
+          <div className="flex flex-col h-full overflow-y-auto">
             <div className="mt-3">
               <input
                 type="text"
@@ -265,10 +216,10 @@ export default function App() {
           
         </div>
       </Modal>
-      <Modal show={show2} setShow={setShow2}>
+      <Modal className="overflow-y-auto" show={show2} setShow={setShow2}>
         <div className="flex flex-col w-96">
           <h1 className="text-center">Modal 2</h1>
-          <ul>
+          <ul >
             {selectedContact && (
               <>
                 <li>
